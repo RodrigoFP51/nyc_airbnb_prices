@@ -1,9 +1,22 @@
 ---
 title: "NYC Airbnb Data Analysis"
 author: "Rodrigo F. Pizzinato"
-date: "09/02/2023"
-output: html_document
+date: '`r format(Sys.Date(), "%d/%m/%Y")`'
+output: 
+  html_document:
+  keep_md: true
+  toc: true
+  toc_depth: 2
+  
 ---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE,
+                      message = FALSE,
+                      warning = FALSE,
+                      error = FALSE, 
+                      fig.width = 9)
+```
 
 ```{r}
 library(tidyverse)
@@ -12,16 +25,34 @@ library(tidymodels)
 library(tidylo)
 library(DataExplorer)
 library(funModeling)
+library(patchwork)
 ```
 
 ```{r}
 airbnb_raw <- read_csv(here("Data/train.csv")) %>% 
   mutate(across(c(host_id, id), as.character))
 ```
-```{r}
-airbnb_raw 
+## Distributions 
+```{r, fig.height=12}
+g1 <- airbnb_raw %>% 
+  select(where(is.numeric), -price) %>% 
+  pivot_longer(everything()) %>% 
+  drop_na() %>% 
+  ggplot(aes(value)) + 
+  geom_histogram(fill = "#003366", color = "black", bins = 25) +
+  facet_wrap(vars(name), scales = "free")
+
+g2 <- airbnb_raw %>% 
+  ggplot(aes(price)) + 
+  geom_histogram(fill = "#003366", color = "black", bins = 25) +
+  ggtitle("Price Distribution")
+
+(g2 / g1) + patchwork::
 ```
 
+```{r}
+airbnb_raw
+```
 
 
 
