@@ -1,0 +1,28 @@
+---
+title: "NYC Airbnb Data Analysis"
+author: "Rodrigo F. Pizzinato"
+date: "09/02/2023"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(here)
+library(tidymodels)
+library(tidylo)
+library(DataExplorer)
+library(funModeling)
+```
+
+```{r}
+airbnb_raw <- read_csv(here("Data/train.csv")) %>% 
+  mutate(across(c(host_id, id), as.character))
+```
+```{r}
+airbnb_raw 
+```
+
+
+
+
+
