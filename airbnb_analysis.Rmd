@@ -23,36 +23,82 @@ library(tidyverse)
 library(here)
 library(tidymodels)
 library(tidylo)
+library(ggthemes)
 library(DataExplorer)
 library(funModeling)
 library(patchwork)
+
+theme_set(
+  ggtech::theme_airbnb_fancy(base_size = 2)
+)
 ```
 
 ```{r}
-airbnb_raw <- read_csv(here("Data/train.csv")) %>% 
+airbnb<- read_csv(here("Data/train.csv")) %>% 
   mutate(across(c(host_id, id), as.character))
 ```
-## Distributions 
+
+## Dados faltantes
+```{r}
+airbnb %>% 
+  plot_missing()
+```
+
+## distribuição das variáveos numéricas
 ```{r, fig.height=12}
-g1 <- airbnb_raw %>% 
+g1 <- airbnb %>% 
   select(where(is.numeric), -price) %>% 
   pivot_longer(everything()) %>% 
   drop_na() %>% 
   ggplot(aes(value)) + 
-  geom_histogram(fill = "#003366", color = "black", bins = 25) +
-  facet_wrap(vars(name), scales = "free")
+  geom_histogram(fill = "#003366", color = "white", bins = 25, alpha = 0.75) +
+  facet_wrap(vars(name), scales = "free") +
+  labs(x='')
 
-g2 <- airbnb_raw %>% 
+g2 <- airbnb %>% 
   ggplot(aes(price)) + 
-  geom_histogram(fill = "#003366", color = "black", bins = 25) +
-  ggtitle("Price Distribution")
+  geom_histogram(fill = "#003366", color = "black", bins = 25, alpha = 0.75) +
+  scale_x_continuous(labels = scales::dollar) +
+  labs(x='')
+  ggtitle("Price")
 
-(g2 / g1) + patchwork::
+(g2 / g1) + patchwork::plot_annotation(title = "Distribution of Numerical Variables")
+```
+
+- Talvez o preço se beneficie com uma transformação logarítmica 
+
+```{r}
+g2 +
+  scale_x_log10()
+```
+
+- Se assemelhou muito a uma distribuição normal, portanto usarei logaritmo a partir daqui.    
+
+```{r}
+rm(g1,g2)
+airbnb <- airbnb %>% 
+  mutate(price = log10(price))
 ```
 
 ```{r}
-airbnb_raw
+airbnb %>%
+  ggplot(aes(neighbourhood_group, price)) +
+  geom_boxplot() 
+  #scale_y_log10()
+
+# airbnb %>% 
+#   ggplot(aes(price, neighbourhood_group)) +
+#   ggridges::geom_density_ridges() 
+
 ```
+
+
+- Comparar o preço através das diferentes vizinhanças, tipo de quarto.  
+- Utilizar gráfico com latitude e longitude para comprovar a diferença de preços.  
+- Extrair texto da coluna "name" e comparar com preço.  
+- Usar Predictive Power Score e comparar com coeficiente de correlação.  
+- Correlação entre as variáveis numéricas.  
+- Imputação para reviews_per_month e extrair feature de last_review.  
 
 
 
