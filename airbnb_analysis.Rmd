@@ -23,18 +23,19 @@ library(tidyverse)
 library(here)
 library(tidymodels)
 library(tidylo)
+library(ppsr)
 library(ggthemes)
 library(DataExplorer)
-library(funModeling)
+library(paletteer)
 library(patchwork)
 
 theme_set(
-  ggtech::theme_airbnb_fancy(base_size = 2)
+  ggthemes::theme_gdocs()
 )
 ```
 
 ```{r}
-airbnb<- read_csv(here("Data/train.csv")) %>% 
+airbnb <- read_csv(here("Data/train.csv")) %>% 
   mutate(across(c(host_id, id), as.character))
 ```
 
@@ -44,7 +45,11 @@ airbnb %>%
   plot_missing()
 ```
 
-## distribuição das variáveos numéricas
+```{r}
+skimr::skim(airbnb)
+```
+
+## distribuição das variáveis numéricas
 ```{r, fig.height=12}
 g1 <- airbnb %>% 
   select(where(is.numeric), -price) %>% 
@@ -72,24 +77,86 @@ g2 +
   scale_x_log10()
 ```
 
-- Se assemelhou muito a uma distribuição normal, portanto usarei logaritmo a partir daqui.    
+- Se assemelhou muito a uma distribuição normal, portanto usarei logaritmo para a modelagem e alguns gráficos.   
 
 ```{r}
 rm(g1,g2)
-airbnb <- airbnb %>% 
-  mutate(price = log10(price))
 ```
 
 ```{r}
-airbnb %>%
-  ggplot(aes(neighbourhood_group, price)) +
-  geom_boxplot() 
-  #scale_y_log10()
+plot_grouped_distributions <- function(data,
+                                       group,
+                                       palette = "nord::afternoon_prarie"){
+  data %>% 
+  ggplot(aes(price+1, {{group}}, # + 1 pra não ter valores zerados no preço
+             fill = factor(stat(quantile)))) + 
+  ggridges::stat_density_ridges(
+    geom = "density_ridges_gradient",
+    quantiles = 5, quantile_lines = TRUE,
+    alpha = 0.8
+  ) +
+  geom_vline(xintercept = median(data$price), 
+             lty = 2,
+             linewidth = 1.5, 
+             alpha = 0.75,
+             color = "gray40") +
+  scale_fill_paletteer_d(palette, name = "Quintil") +
+  scale_x_log10(labels = scales::dollar) +
+  labs(x='', y='')
+}
 
-# airbnb %>% 
-#   ggplot(aes(price, neighbourhood_group)) +
-#   ggridges::geom_density_ridges() 
+airbnb %>% 
+  mutate(neighbourhood_group = fct_reorder(neighbourhood_group, price)) %>% 
+  filter(between(price, 10, 1000)) %>% 
+  plot_grouped_distributions(neighbourhood_group)
 
+```
+
+
+```{r}
+airbnb %>% 
+  filter(between(price, 10, 1000)) %>% 
+  plot_grouped_distributions(room_type)
+```
+```{r}
+airbnb %>% 
+  filter(between(price, 10, 1000)) %>% 
+  mutate(neighbourhood = fct_lump(neighbourhood, n = 9),
+         neighbourhood = fct_reorder(neighbourhood, price)) %>% 
+  plot_grouped_distributions(neighbourhood)
+```
+## Predictive Power Score
+
+```{r}
+pps <- airbnb %>% 
+  select(-name, -host_name, -ends_with("id")) %>% 
+  mutate(neighbourhood = fct_lump(neighbourhood, n = 9)) %>% 
+  drop_na() %>% 
+  ppsr::score_predictors(y = "price") %>% 
+  filter(!is.na(baseline_score))
+
+corr_features <- corrr::correlate(airbnb) %>% 
+  select(corr = price, term) %>% 
+  drop_na()
+
+g1 <- pps %>% 
+  mutate(x = fct_reorder(x, pps)) %>% 
+  ggplot(aes(x,pps, fill = pps)) +
+  geom_col() +
+  scale_fill_gradient(low = "#6497b1", high = "#011f4b") +
+  coord_flip() +
+  labs(x='',y='') +
+  ggtitle("Predictive Power Score")
+
+g2 <- corr_features %>% 
+  ggplot(aes(term, corr, fill = corr)) +
+  geom_col() +
+  scale_fill_gradient(low = "#6497b1", high = "#011f4b") +
+  coord_flip() +
+  ggtitle("Correlação: Pearson") +
+  labs(x='',y='') 
+
+(g1 / g2)
 ```
 
 
