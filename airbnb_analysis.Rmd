@@ -21,7 +21,7 @@ knitr::opts_chunk$set(echo = TRUE,
 ```{r}
 library(tidyverse)
 library(here)
-library(tidymodels)
+library(tidytext)
 library(tidylo)
 library(ppsr)
 library(ggthemes)
@@ -108,7 +108,7 @@ plot_grouped_distributions <- function(data,
 airbnb %>% 
   mutate(neighbourhood_group = fct_reorder(neighbourhood_group, price)) %>% 
   filter(between(price, 10, 1000)) %>% 
-  plot_grouped_distributions(neighbourhood_group)
+  plot_grouped_distributions(neighbourhood_group, "miscpalettes::pastel")
 
 ```
 
@@ -118,6 +118,7 @@ airbnb %>%
   filter(between(price, 10, 1000)) %>% 
   plot_grouped_distributions(room_type)
 ```
+
 ```{r}
 airbnb %>% 
   filter(between(price, 10, 1000)) %>% 
@@ -158,12 +159,42 @@ g2 <- corr_features %>%
 
 (g1 / g2)
 ```
+```{r}
+airbnb_tokens <- airbnb %>% 
+  unnest_tokens(word, name) %>% 
+  anti_join(stop_words, by = "word") %>% 
+  filter(str_detect(word, regex("^<U|[:digit:]"), negate = TRUE))
 
+airbnb_tokens %>% 
+  group_by(word) %>% 
+  summarize(median_price = median(price),
+            n = n()) %>% 
+  arrange(desc(n)) %>% 
+  head(30) %>% 
+  mutate(word = fct_reorder(word, median_price)) %>% 
+  ggplot(aes(word, median_price, fill = n)) +
+  geom_col() +
+  geom_text(aes(label = n), hjust = 1, color = "white", fontface = "bold") +
+  scale_fill_gradient(low = "#6497b1", high = "#011f4b") +
+  scale_y_continuous(labels = scales::dollar) +
+  coord_flip()
+```
 
-- Comparar o preço através das diferentes vizinhanças, tipo de quarto.  
-- Utilizar gráfico com latitude e longitude para comprovar a diferença de preços.  
-- Extrair texto da coluna "name" e comparar com preço.  
-- Usar Predictive Power Score e comparar com coeficiente de correlação.  
+```{r}
+airbnb %>% 
+  ggplot(aes(latitude,longitude, z = log(price))) + 
+  stat_summary_hex(bins = 75) +
+  scale_fill_paletteer_c("grDevices::Inferno") +
+  theme_map()
+```
+
+```{r}
+airbnb %>% 
+  keep(is.numeric) %>% 
+  cor(method = "spearman") %>% 
+  ggcorrplot::ggcorrplot()
+```
+
 - Correlação entre as variáveis numéricas.  
 - Imputação para reviews_per_month e extrair feature de last_review.  
 
