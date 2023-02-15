@@ -22,7 +22,7 @@ knitr::opts_chunk$set(echo = TRUE,
 library(tidyverse)
 library(here)
 library(tidytext)
-library(tidylo)
+library(lubridate)
 library(ppsr)
 library(ggthemes)
 library(DataExplorer)
@@ -75,18 +75,16 @@ g2 <- airbnb %>%
 ```{r}
 g2 +
   scale_x_log10()
+
+rm(g1,g2)
 ```
 
 - Se assemelhou muito a uma distribuição normal, portanto usarei logaritmo para a modelagem e alguns gráficos.   
 
 ```{r}
-rm(g1,g2)
-```
-
-```{r}
 plot_grouped_distributions <- function(data,
                                        group,
-                                       palette = "nord::afternoon_prarie"){
+                                       palette = "colRoz::k_tristis"){
   data %>% 
   ggplot(aes(price+1, {{group}}, # + 1 pra não ter valores zerados no preço
              fill = factor(stat(quantile)))) + 
@@ -108,9 +106,10 @@ plot_grouped_distributions <- function(data,
 airbnb %>% 
   mutate(neighbourhood_group = fct_reorder(neighbourhood_group, price)) %>% 
   filter(between(price, 10, 1000)) %>% 
-  plot_grouped_distributions(neighbourhood_group, "miscpalettes::pastel")
+  plot_grouped_distributions(neighbourhood_group)
 
 ```
+- Manhattan demonstra ter preços bem maiores, com seu segundo quintil sendo maior que o quinto quintil de Bronx.
 
 
 ```{r}
@@ -126,6 +125,7 @@ airbnb %>%
          neighbourhood = fct_reorder(neighbourhood, price)) %>% 
   plot_grouped_distributions(neighbourhood)
 ```
+
 ## Predictive Power Score
 
 ```{r}
@@ -159,6 +159,9 @@ g2 <- corr_features %>%
 
 (g1 / g2)
 ```
+
+## Reviews
+
 ```{r}
 airbnb_tokens <- airbnb %>% 
   unnest_tokens(word, name) %>% 
@@ -172,30 +175,51 @@ airbnb_tokens %>%
   arrange(desc(n)) %>% 
   head(30) %>% 
   mutate(word = fct_reorder(word, median_price)) %>% 
-  ggplot(aes(word, median_price, fill = n)) +
-  geom_col() +
-  geom_text(aes(label = n), hjust = 1, color = "white", fontface = "bold") +
-  scale_fill_gradient(low = "#6497b1", high = "#011f4b") +
+  ggplot(aes(word, median_price, size = n)) +
+  geom_point(pch = 18, size = 5) +
+  #geom_text(aes(label = n), hjust = 1, color = "white", fontface = "bold") +
   scale_y_continuous(labels = scales::dollar) +
   coord_flip()
 ```
 
+## Mapas e preço
+
 ```{r}
 airbnb %>% 
   ggplot(aes(latitude,longitude, z = log(price))) + 
-  stat_summary_hex(bins = 75) +
-  scale_fill_paletteer_c("grDevices::Inferno") +
-  theme_map()
+  stat_summary_hex(bins = 60) +
+  scale_fill_paletteer_c("scico::bamako", direction = -1, name = "Log of Price")  +
+  guides(fill = guide_colorbar(title.position = "top")) +
+  labs(x='', y='',
+       title = "") +
+  theme(legend.direction = "horizontal", 
+        legend.position = c(0.85,0.1), 
+        legend.background = element_blank())
 ```
 
 ```{r}
 airbnb %>% 
   keep(is.numeric) %>% 
-  cor(method = "spearman") %>% 
-  ggcorrplot::ggcorrplot()
+  cor() %>% 
+  ggcorrplot::ggcorrplot(lab = TRUE)
 ```
 
-- Correlação entre as variáveis numéricas.  
+```{r}
+airbnb %>% 
+  mutate(year = year(last_review),
+         month = month(last_review, label = TRUE, abbr = TRUE)) %>% 
+  select(price, year, month) %>%
+  group_by(year,month) %>% 
+  summarize(price = median(price), .groups = "drop") %>% 
+  ggplot(aes(year, month, fill = price)) +
+  geom_tile() +
+  geom_text(aes(label = scales::dollar(price)), fontface = "bold", color = "white") +
+  scale_x_continuous(breaks = 2011:2019) +
+  scale_fill_paletteer_c("scico::buda") +
+  theme_minimal()
+```
+
+
 - Imputação para reviews_per_month e extrair feature de last_review.  
 
 
