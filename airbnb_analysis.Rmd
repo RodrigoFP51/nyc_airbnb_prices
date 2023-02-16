@@ -18,6 +18,8 @@ knitr::opts_chunk$set(echo = TRUE,
                       fig.width = 9)
 ```
 
+Dados: [Kaggle](https://www.kaggle.com/c/sliced-s01e05-WXx7h8/data)
+
 ```{r}
 library(tidyverse)
 library(here)
@@ -44,6 +46,12 @@ airbnb <- read_csv(here("Data/train.csv")) %>%
 airbnb %>% 
   plot_missing()
 ```
+
+```{r}
+airbnb %>% 
+  visdat::vis_miss()
+```
+
 
 ```{r}
 skimr::skim(airbnb)
@@ -87,7 +95,7 @@ plot_grouped_distributions <- function(data,
                                        palette = "colRoz::k_tristis"){
   data %>% 
   ggplot(aes(price+1, {{group}}, # + 1 pra não ter valores zerados no preço
-             fill = factor(stat(quantile)))) + 
+             fill = factor(after_stat(quantile)))) + 
   ggridges::stat_density_ridges(
     geom = "density_ridges_gradient",
     quantiles = 5, quantile_lines = TRUE,
@@ -136,7 +144,8 @@ pps <- airbnb %>%
   ppsr::score_predictors(y = "price") %>% 
   filter(!is.na(baseline_score))
 
-corr_features <- corrr::correlate(airbnb) %>% 
+corr_features <- corrr::correlate(airbnb, 
+                                  use = "pairwise.complete.obs") %>% 
   select(corr = price, term) %>% 
   drop_na()
 
@@ -171,7 +180,7 @@ airbnb_tokens <- airbnb %>%
 airbnb_tokens %>% 
   group_by(word) %>% 
   summarize(median_price = median(price),
-            n = n()) %>% 
+            n = n()) %>%
   arrange(desc(n)) %>% 
   head(30) %>% 
   mutate(word = fct_reorder(word, median_price)) %>% 
@@ -194,33 +203,43 @@ airbnb %>%
        title = "") +
   theme(legend.direction = "horizontal", 
         legend.position = c(0.85,0.1), 
-        legend.background = element_blank())
+        legend.background = element_blank()) +
+  theme_minimal()
 ```
 
 ```{r}
 airbnb %>% 
   keep(is.numeric) %>% 
-  cor() %>% 
+  cor(use = "pairwise.complete.obs") %>% 
   ggcorrplot::ggcorrplot(lab = TRUE)
 ```
 
 ```{r}
 airbnb %>% 
+  drop_na() %>% 
   mutate(year = year(last_review),
          month = month(last_review, label = TRUE, abbr = TRUE)) %>% 
   select(price, year, month) %>%
   group_by(year,month) %>% 
   summarize(price = median(price), .groups = "drop") %>% 
   ggplot(aes(year, month, fill = price)) +
-  geom_tile() +
+  geom_tile(linejoin = "round", color = "white") +
   geom_text(aes(label = scales::dollar(price)), fontface = "bold", color = "white") +
   scale_x_continuous(breaks = 2011:2019) +
-  scale_fill_paletteer_c("scico::buda") +
-  theme_minimal()
+  scale_fill_paletteer_c("scico::bamako", name = "Price") +
+  theme_minimal() +
+  labs(x='', y='',
+       title = "Mediana do preço por ano e mês")
+```
+
+```{r}
+airbnb %>% 
+  transmute(number_of_reviews, minimum_nights, reviews_per_month) 
+  #as.data.frame()
 ```
 
 
-- Imputação para reviews_per_month e extrair feature de last_review.  
+- Impute missing last_review e reviews_per_month
 
 
 
