@@ -188,7 +188,9 @@ airbnb_tokens %>%
   geom_point(pch = 18, size = 5) +
   #geom_text(aes(label = n), hjust = 1, color = "white", fontface = "bold") +
   scale_y_continuous(labels = scales::dollar) +
-  coord_flip()
+  coord_flip() +
+  labs(x='', y='Preço mediano',
+       title = "Preço associado a cada palavra da descrição") 
 ```
 
 ## Mapas e preço
@@ -196,7 +198,7 @@ airbnb_tokens %>%
 ```{r}
 airbnb %>% 
   ggplot(aes(latitude,longitude, z = log(price))) + 
-  stat_summary_hex(bins = 60) +
+  stat_summary_hex(bins = 50) +
   scale_fill_paletteer_c("scico::bamako", direction = -1, name = "Log of Price")  +
   guides(fill = guide_colorbar(title.position = "top")) +
   labs(x='', y='',
@@ -216,20 +218,27 @@ airbnb %>%
 
 ```{r}
 airbnb %>% 
+  filter(price < 1000) %>% 
   drop_na() %>% 
   mutate(year = year(last_review),
          month = month(last_review, label = TRUE, abbr = TRUE)) %>% 
   select(price, year, month) %>%
   group_by(year,month) %>% 
-  summarize(price = median(price), .groups = "drop") %>% 
+  summarize(price = median(price),
+            color = if_else(price < 100, "black", "white"),
+            .groups = "drop") %>% 
   ggplot(aes(year, month, fill = price)) +
   geom_tile(linejoin = "round", color = "white") +
-  geom_text(aes(label = scales::dollar(price)), fontface = "bold", color = "white") +
+  geom_text(aes(label = scales::dollar(price), color = color),
+            show.legend = FALSE,
+            fontface = "bold") +
   scale_x_continuous(breaks = 2011:2019) +
-  scale_fill_paletteer_c("scico::bamako", name = "Price") +
+  scale_color_manual(values = c("black","white")) +
+  scale_fill_paletteer_c("scico::bamako", name = "Price", direction = -1) +
   theme_minimal() +
   labs(x='', y='',
-       title = "Mediana do preço por ano e mês")
+       title = "Mediana do preço por ano e mês") + 
+  theme(plot.title = element_text(hjust = 0.5, size = 18))
 ```
 
 ```{r}
