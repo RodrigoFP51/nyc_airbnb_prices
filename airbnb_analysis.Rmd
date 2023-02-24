@@ -18,8 +18,6 @@ knitr::opts_chunk$set(echo = TRUE,
                       fig.width = 9)
 ```
 
-Dados: [Kaggle](https://www.kaggle.com/c/sliced-s01e05-WXx7h8/data)
-
 ```{r}
 library(tidyverse)
 library(here)
@@ -35,6 +33,15 @@ theme_set(
   ggthemes::theme_gdocs()
 )
 ```
+
+O aluguel de acomodações através do Airbnb se tornou uma alternativa popular e conveniente para muitos viajantes. Com a crescente demanda por acomodações, é importante para os proprietários e locatários terem uma compreensão clara do mercado imobiliário para precificar adequadamente suas propriedades.
+
+A ciência de dados pode ser aplicada ao mercado imobiliário do Airbnb para prever preços de aluguel com base em uma série de fatores, como localização, tamanho do imóvel, número de comodidades e disponibilidade sazonal. Essa previsão pode ajudar proprietários e locatários a estabelecer preços competitivos e aumentar sua receita.
+
+Neste projeto de ciência de dados, exploraremos os dados do Airbnb e utilizaremos técnicas de análise exploratória de dados, visualização e modelagem preditiva para prever os preços de aluguel de propriedades do Airbnb. Através da análise desses dados, esperamos obter insights úteis sobre o mercado imobiliário do Airbnb e fornecer recomendações valiosas para proprietários e locatários de imóveis.
+
+
+- Dados: [Kaggle](https://www.kaggle.com/c/sliced-s01e05-WXx7h8/data)  
 
 ```{r}
 airbnb <- read_csv(here("Data/train.csv")) %>% 
@@ -242,10 +249,15 @@ airbnb %>%
 ```
 
 ```{r}
-airbnb %>% 
-  transmute(number_of_reviews, minimum_nights, reviews_per_month) 
-  #as.data.frame()
+airbnb_imputed <- airbnb %>% 
+  as.data.frame() %>% 
+  simputation::impute_knn(reviews_per_month ~ minimum_nights + number_of_reviews, k = 4) %>% 
+  as_tibble() %>% 
+  fill(last_review, .direction = "down") %>% 
+  drop_na()
 ```
+
+
 
 
 - Impute missing last_review e reviews_per_month
