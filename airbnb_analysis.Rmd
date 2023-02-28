@@ -97,15 +97,17 @@ rm(g1,g2)
 - Se assemelhou muito a uma distribuição normal, portanto usarei logaritmo para a modelagem e alguns gráficos.   
 
 ```{r}
+# DresdenColor::paired
 plot_grouped_distributions <- function(data,
                                        group,
-                                       palette = "colRoz::k_tristis"){
+                                       palette = "DresdenColor::paired"){
   data %>% 
   ggplot(aes(price+1, {{group}}, # + 1 pra não ter valores zerados no preço
              fill = factor(after_stat(quantile)))) + 
   ggridges::stat_density_ridges(
     geom = "density_ridges_gradient",
-    quantiles = 5, quantile_lines = TRUE,
+    quantiles = 4,
+    quantile_lines = TRUE,
     alpha = 0.8
   ) +
   geom_vline(xintercept = median(data$price), 
@@ -113,7 +115,7 @@ plot_grouped_distributions <- function(data,
              linewidth = 1.5, 
              alpha = 0.75,
              color = "gray40") +
-  scale_fill_paletteer_d(palette, name = "Quintil") +
+  scale_fill_paletteer_d(palette, name = "Quartil") +
   scale_x_log10(labels = scales::dollar) +
   labs(x='', y='')
 }
@@ -124,14 +126,17 @@ airbnb %>%
   plot_grouped_distributions(neighbourhood_group)
 
 ```
-- Manhattan demonstra ter preços bem maiores, com seu segundo quintil sendo maior que o quinto quintil de Bronx.
-
+- Manhattan demonstra ter preços bem maiores, com seu primeiro quartil sendo maior que o último quartil de Bronx.  
+- Staten Island e Queens tem distribuições bem parecidas.  
+- A feature um bom potencial para ser incluído no modelo.  
 
 ```{r}
 airbnb %>% 
   filter(between(price, 10, 1000)) %>% 
   plot_grouped_distributions(room_type)
 ```
+- Diferente de `neighborhood group`, `room type` distingue melhor os preços.  
+- Os quartos compartilhados, como esperado, são os mais baratos, enquanto a casa/apartamento inteiro tem um preço muito mais elevado.   
 
 ```{r}
 airbnb %>% 
@@ -140,6 +145,10 @@ airbnb %>%
          neighbourhood = fct_reorder(neighbourhood, price)) %>% 
   plot_grouped_distributions(neighbourhood)
 ```
+- Dado que existem `r n_distinct(airbnb$neighbourhood)` grupos diferentes na coluna `neighborhood` foi necessário fazer uma redução e colocar os grupos mais infrequentes como `outros`.  
+- Hell's Kitchen, Upper West Side e East Village são as vizinhanças mais caras.  
+- Pode ser uma variável preditora valiosa, mas deve ser utilizada apenas algumas categorias.  
+
 
 ## Predictive Power Score
 
@@ -175,6 +184,7 @@ g2 <- corr_features %>%
 
 (g1 / g2)
 ```
+O Predictive Power Score é uma forma de estimar quais variáveis são importantes preditoras em um conjunto de dados. 
 
 ## Reviews
 
@@ -192,7 +202,7 @@ airbnb_tokens %>%
   head(30) %>% 
   mutate(word = fct_reorder(word, median_price)) %>% 
   ggplot(aes(word, median_price, size = n)) +
-  geom_point(pch = 18, size = 5) +
+  geom_point(pch = 18, size = 5, color = "darkblue") +
   #geom_text(aes(label = n), hjust = 1, color = "white", fontface = "bold") +
   scale_y_continuous(labels = scales::dollar) +
   coord_flip() +
@@ -241,11 +251,14 @@ airbnb %>%
             fontface = "bold") +
   scale_x_continuous(breaks = 2011:2019) +
   scale_color_manual(values = c("black","white")) +
-  scale_fill_paletteer_c("scico::bamako", name = "Price", direction = -1) +
+  scale_fill_paletteer_c("scico::bamako",
+                         name = "Price",
+                         direction = -1) +
   theme_minimal() +
   labs(x='', y='',
        title = "Mediana do preço por ano e mês") + 
   theme(plot.title = element_text(hjust = 0.5, size = 18))
+
 ```
 
 ```{r}
@@ -255,12 +268,11 @@ airbnb_imputed <- airbnb %>%
   as_tibble() %>% 
   fill(last_review, .direction = "down") %>% 
   drop_na()
+
+write_csv(airbnb_imputed, file = here("Data/airbnb_imputed"))
 ```
 
 
-
-
-- Impute missing last_review e reviews_per_month
 
 
 
