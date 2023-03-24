@@ -30,7 +30,10 @@ library(paletteer)
 library(patchwork)
 
 theme_set(
-  ggthemes::theme_gdocs()
+  ggthemes::theme_gdocs(12) +
+    theme(
+      axis.text = element_text(face = "bold", color = "#e37070")
+    )
 )
 ```
 
@@ -116,7 +119,7 @@ plot_grouped_distributions <- function(data,
              alpha = 0.75,
              color = "gray40") +
   scale_fill_paletteer_d(palette, name = "Quartil") +
-  scale_x_log10(labels = scales::dollar) +
+  scale_x_log10(labels = scales::dollar, breaks = c(10,30,100,300,1000)) +
   labs(x='', y='')
 }
 
@@ -269,7 +272,7 @@ airbnb_imputed <- airbnb %>%
   fill(last_review, .direction = "down") %>% 
   drop_na()
 
-write_csv(airbnb_imputed, file = here("Data/airbnb_imputed"))
+write_csv(airbnb_imputed, file = here("Data/airbnb_imputed.csv"))
 ```
 
 
