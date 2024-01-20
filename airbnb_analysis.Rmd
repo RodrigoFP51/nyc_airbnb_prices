@@ -2,6 +2,8 @@
 title: "NYC Airbnb Data Analysis"
 author: "Rodrigo F. Pizzinato"
 date: '`r format(Sys.Date(), "%d/%m/%Y")`'
+editor_options:
+  chunk_output_style: console
 output: 
   html_document:
   keep_md: true
@@ -43,19 +45,27 @@ A ciência de dados pode ser aplicada ao mercado imobiliário do Airbnb para pre
 
 Neste projeto de ciência de dados, exploraremos os dados do Airbnb e utilizaremos técnicas de análise exploratória de dados, visualização e modelagem preditiva para prever os preços de aluguel de propriedades do Airbnb. Através da análise desses dados, esperamos obter insights úteis sobre o mercado imobiliário do Airbnb e fornecer recomendações valiosas para proprietários e locatários de imóveis.
 
-
 - Dados: [Kaggle](https://www.kaggle.com/c/sliced-s01e05-WXx7h8/data)  
+
+## Leitura dos dados
 
 ```{r}
 airbnb <- read_csv(here("Data/train.csv")) %>% 
   mutate(across(c(host_id, id), as.character))
 ```
 
+Primeiramente é feita a leitura dos dados do arquivo CSV e as colunas `host_id` e `id`
+são transformadas em tipo character, pois são identificadores únicos e não devem ser utilizadas como números.
+
 ## Dados faltantes
+
 ```{r}
 airbnb %>% 
   plot_missing()
 ```
+
+-  `name` e `host_name` possuem uma proporção tão baixa de valores ausentes que não fará tanta diferença na qualidade dos dados se forem removidas essas observações.
+-  Já `reviews_per_month` e `last_review` são ótimos candidatos a terem seus valores imputados, pois são variáveis que provavelmente impactam nossa variável explicativa e excluir essas informações pode piorar o ajuste do modelo.
 
 ```{r}
 airbnb %>% 
@@ -64,10 +74,17 @@ airbnb %>%
 
 
 ```{r}
-skimr::skim(airbnb)
+dlookr::diagnose_numeric(airbnb)
 ```
 
-## distribuição das variáveis numéricas
+O resultado nos indica que a maior parte dos dados está dentro do comum, tirando o fato de que existem 8 observações
+de preço que estão zerados, que serão removidas.
+
+```{r}
+airbnb <- airbnb %>% filter(price > 0)
+```
+
+## Distribuição das variáveis numéricas
 ```{r, fig.height=12}
 g1 <- airbnb %>% 
   select(where(is.numeric), -price) %>% 
@@ -94,7 +111,7 @@ g2 <- airbnb %>%
 g2 +
   scale_x_log10()
 
-rm(g1,g2)
+rm(g1,g2) # Remover os objetos de gráfico da memoria
 ```
 
 - Se assemelhou muito a uma distribuição normal, portanto usarei logaritmo para a modelagem e alguns gráficos.   
@@ -131,15 +148,16 @@ airbnb %>%
 ```
 - Manhattan demonstra ter preços bem maiores, com seu primeiro quartil sendo maior que o último quartil de Bronx.  
 - Staten Island e Queens tem distribuições bem parecidas.  
-- A feature um bom potencial para ser incluído no modelo.  
+- A feature tem um bom potencial para ser incluído no modelo.  
 
 ```{r}
 airbnb %>% 
   filter(between(price, 10, 1000)) %>% 
   plot_grouped_distributions(room_type)
 ```
-- Diferente de `neighborhood group`, `room type` distingue melhor os preços.  
-- Os quartos compartilhados, como esperado, são os mais baratos, enquanto a casa/apartamento inteiro tem um preço muito mais elevado.   
+-  Diferente de `neighborhood group`, `room type` distingue melhor os preços.  
+-  Os quartos compartilhados, como esperado, são os mais baratos, enquanto a casa/apartamento inteiro tem um preço muito mais elevado.   
+-  Até o momento me parece a feature com maior poder explicativo do preço.
 
 ```{r}
 airbnb %>% 
@@ -150,8 +168,8 @@ airbnb %>%
 ```
 - Dado que existem `r n_distinct(airbnb$neighbourhood)` grupos diferentes na coluna `neighborhood` foi necessário fazer uma redução e colocar os grupos mais infrequentes como `outros`.  
 - Hell's Kitchen, Upper West Side e East Village são as vizinhanças mais caras.  
-- Pode ser uma variável preditora valiosa, mas deve ser utilizada apenas algumas categorias.  
-
+- Pode ser uma variável preditora valiosa, mas seria mais interessante utilizar apenas algumas categorias, 
+para simplificar a modelagem.
 
 ## Predictive Power Score
 
@@ -182,12 +200,14 @@ g2 <- corr_features %>%
   geom_col() +
   scale_fill_gradient(low = "#6497b1", high = "#011f4b") +
   coord_flip() +
-  ggtitle("Correlação: Pearson") +
+  ggtitle("Correlacao: Pearson") +
   labs(x='',y='') 
 
 (g1 / g2)
 ```
-O Predictive Power Score é uma forma de estimar quais variáveis são importantes preditoras em um conjunto de dados. 
+O Predictive Power Score é uma forma de estimar quais variáveis são importantes preditoras de outra em um conjunto de dados.  
+
+
 
 ## Reviews
 
@@ -201,8 +221,8 @@ airbnb_tokens %>%
   group_by(word) %>% 
   summarize(median_price = median(price),
             n = n()) %>%
-  arrange(desc(n)) %>% 
-  head(30) %>% 
+  filter(n > 50) %>% 
+  slice_max(median_price, n = 20) %>% 
   mutate(word = fct_reorder(word, median_price)) %>% 
   ggplot(aes(word, median_price, size = n)) +
   geom_point(pch = 18, size = 5, color = "darkblue") +
@@ -212,6 +232,8 @@ airbnb_tokens %>%
   labs(x='', y='Preço mediano',
        title = "Preço associado a cada palavra da descrição") 
 ```
+
+
 
 ## Mapas e preço
 
