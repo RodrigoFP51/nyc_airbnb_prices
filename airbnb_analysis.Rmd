@@ -294,6 +294,19 @@ airbnb_imputed <- airbnb %>%
   fill(last_review, .direction = "down") %>% 
   drop_na()
 
+list(k = c(2,4,6)) %>%
+  map(
+    \(x){
+      airbnb %>% 
+        as.data.frame() %>% 
+        simputation::impute_knn(reviews_per_month ~ minimum_nights + number_of_reviews, k = x) %>% 
+        as_tibble() %>% 
+        fill(last_review, .direction = "down") %>% 
+        drop_na() %>% 
+        dlookr::plot_hist_numeric()
+    }
+  )
+
 write_csv(airbnb_imputed, file = here("Data/airbnb_imputed.csv"))
 ```
 
