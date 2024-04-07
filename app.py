@@ -13,6 +13,7 @@ neighbourhood = data['neighbourhood'].unique()
 
 # model.feature_names_in_
 
+
 st.title('Predict Airbnb Rent Cost')
 col1, col2 = st.columns([1,1])
 
@@ -98,5 +99,4 @@ st.dataframe(client_data)
 pred_value = model.predict(client_data)
 pred_value = exp(pred_value)
 st.write(f"Valor do aluguel previsto: US{round(float(pred_value), 2)}")
-
 
