@@ -56,8 +56,26 @@ como deve ser enviada o arquivo CSV para submeter à competição.
 
 ## Pipeline
 
-Através dos dados já imputados, começo o processo de modelagem
-transformando a variável preditora em seu log10.
+É criado um objeto Pipeline do Scikit-learn para armazenar as
+transformações e criação de features para os dados do modelo.  
+1. `DateTimeFeatures` seleciona a variável `last_review` e, a partir
+dela, cria indicadores como ano, mês, trimestre, dia da semana, e um
+indicador se a data fornecida é fim de semana ou não.  
+2. `RareLabelEncoder` pega os níveis mais raros da variável
+`neighbourhood` e os junta dentro de uma categoria **Other**.  
+3. `ColumnTransformer` agrega um 3 diferentes transformadores:  
++ `text` que cria um Bag-of-Words;  
++ `cat` que transforma as variáveis categóricas através de **One Hot
+Encoding**;  
++ `remainder` indica que as variáveis restantes não se deve aplicar
+nenhuma transformação;  
+4. `LGBMRegressor` é a instância do Light Gradient Boosting Machine, que
+é o algoritmo ensemble que utilizamos nessa tarefa.
+
+<figure>
+<img src="pipeline_img.png" alt="Pipeline" />
+<figcaption aria-hidden="true">Pipeline</figcaption>
+</figure>
 
 <!-- badges: start -->
 <!-- badges: end -->
