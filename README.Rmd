@@ -11,7 +11,10 @@ knitr::opts_chunk$set(
 )
 ```
 
-# nyc_ayrbnb_prices
+# NYC Airbnb Prices
+
+[![](nyc.jpeg)](https://github.com/RodrigoFP51/nyc_ayrbnb_prices/blob/main/airbnb_analysis.md)
+
 O aluguel de acomodações através do Airbnb se tornou uma alternativa popular e conveniente para muitos viajantes. Com a crescente demanda por acomodações, é importante para os proprietários e locatários terem uma compreensão clara do mercado imobiliário para precificar adequadamente suas propriedades.
 
 A ciência de dados pode ser aplicada ao mercado imobiliário do Airbnb para prever preços de aluguel com base em uma série de fatores, como localização, tamanho do imóvel, número de comodidades e disponibilidade sazonal. Essa previsão pode ajudar proprietários e locatários a estabelecer preços competitivos e aumentar sua receita.

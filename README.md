@@ -1,7 +1,9 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# nyc_ayrbnb_prices
+# NYC Airbnb Prices
+
+[![](nyc.jpeg)](https://github.com/RodrigoFP51/nyc_ayrbnb_prices/blob/main/airbnb_analysis.md)
 
 O aluguel de acomodações através do Airbnb se tornou uma alternativa
 popular e conveniente para muitos viajantes. Com a crescente demanda por

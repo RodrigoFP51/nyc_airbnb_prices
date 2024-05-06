@@ -4,12 +4,7 @@ author: "Rodrigo F. Pizzinato"
 date: '`r format(Sys.Date(), "%d/%m/%Y")`'
 editor_options:
   chunk_output_style: console
-output: 
-  html_document:
-  keep_md: true
-  toc: true
-  toc_depth: 2
-  
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -286,110 +281,7 @@ airbnb_imputed <- airbnb %>%
   fill(last_review, .direction = "down") %>% 
   drop_na()
 
-list(k = c(2,4,6)) %>%
-  map(
-    \(x){
-      airbnb %>% 
-        as.data.frame() %>% 
-        simputation::impute_knn(reviews_per_month ~ minimum_nights + number_of_reviews, k = x) %>% 
-        as_tibble() %>% 
-        fill(last_review, .direction = "down") %>% 
-        drop_na() %>% 
-        dlookr::plot_hist_numeric()
-    }
-  )
-
 write_csv(airbnb_imputed, file = here("Data/airbnb_imputed.csv"))
-```
-
-
-## Modelagem tidymodels
-
-```{r}
-library(tidymodels)
-library(textrecipes)
-
-df <- read_csv(here("Data/airbnb_imputed.csv")) %>% 
-  mutate(across(where(is.character), factor)) %>% 
-  select(-id, -host_id, -host_name) %>% 
-  filter(price > 0)
-
-split <- initial_split(df, prop = 7/10, strata = price)
-df_train <- training(split)
-df_test <- testing(split)
-
-df_folds <- vfold_cv(df_train, v = 5, strata = price)
-```
-
-```{r}
-base_rec <- recipe(price ~ ., data = df_train) %>% 
-  step_log(price) %>% 
-  step_other(neighbourhood, other = "Other", threshold = 0.03) %>% 
-  step_date(last_review, 
-            features = c("month", "dow", "week"),
-            label = TRUE,
-            keep_original_cols = FALSE)
-
-rec_1 <- base_rec %>% 
-  step_YeoJohnson(all_numeric_predictors()) %>% 
-  step_rm(name) %>% 
-  step_dummy(all_nominal_predictors(), one_hot = TRUE) %>% 
-  step_zv(all_predictors())
-
-rec_2 <- base_rec %>% 
-  step_YeoJohnson(all_numeric_predictors()) %>%
-  step_tokenize(name) %>% 
-  step_stopwords(name, stopword_source = "snowball") %>% 
-  step_tokenfilter(name, min_times = 1, max_tokens = 50) %>%
-  step_tfidf(name) %>% 
-  step_dummy(all_nominal_predictors(), one_hot = TRUE) %>% 
-  step_zv(all_predictors())
-
-rec_3 <- base_rec %>% 
-  step_normalize(all_numeric_predictors()) %>% 
-  step_rm(name) %>% 
-  step_dummy(all_nominal_predictors(), one_hot = TRUE) %>% 
-  step_zv(all_predictors())
-```
-
-```{r}
-rf <- rand_forest() %>% 
-  set_engine("ranger") %>% 
-  set_mode("regression")
-
-svm <- svm_linear() %>% 
-  set_engine("LiblineaR") %>% 
-  set_mode("regression")
-
-wf <- workflow_set(
-  models = list(
-    rf = rf,
-    svm = svm
-  ),
-  preproc = list(
-    yeo = rec_1,
-    text = rec_2,
-    norm = rec_3
-  ),
-  cross = TRUE
-)
-```
-
-```{r}
-
-
-wf_res <- 
-  workflow_map(
-    object = wf,
-    verbose = TRUE,
-    resamples = df_folds,
-    metrics = metric_set(mae, rmse),
-    control = control_resamples(save_pred = TRUE),
-    seed = 1998
-  )
-  
-wf_res %>% 
-  filter(wflow_id %>% str_detect("rf"))
 ```
 
 
