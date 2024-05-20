@@ -76,27 +76,27 @@ with col2:
         "Last Review"
     )
     
-    
+st.write("\n\n")
+if st.button("Predict Rent"):
 
+    client_data = pd.DataFrame({
+        "latitude": [latitude],
+        "longitude": [longitude],
+        "minimum_nights": [min_nights],
+        "number_of_reviews": [num_reviews],
+        "reviews_per_month": [reviews_per_month],
+        "calculated_host_listings_count": [calculated_host_listings_count],
+        "availability_365": [availability_365], 
+        "name": [description],
+        "neighbourhood_group": [neighbourhood_group],
+        "neighbourhood": [neighbourhood],
+        "room_type": [room_type],
+        "last_review": [last_review]
+    })
 
-client_data = pd.DataFrame({
-      "latitude": [latitude],
-      "longitude": [longitude],
-      "minimum_nights": [min_nights],
-      "number_of_reviews": [num_reviews],
-      "reviews_per_month": [reviews_per_month],
-      "calculated_host_listings_count": [calculated_host_listings_count],
-      "availability_365": [availability_365], 
-      "name": [description],
-      "neighbourhood_group": [neighbourhood_group],
-      "neighbourhood": [neighbourhood],
-      "room_type": [room_type],
-      "last_review": [last_review]
-})
+    st.dataframe(client_data)
 
-st.dataframe(client_data)
-
-pred_value = model.predict(client_data)
-pred_value = exp(pred_value)
-st.write(f"Valor do aluguel previsto: US{round(float(pred_value), 2)}")
+    pred_value = model.predict(client_data)
+    pred_value = exp(pred_value)
+    st.markdown(f"## Valor do aluguel previsto: US$ {round(float(pred_value), 2)}")
 
