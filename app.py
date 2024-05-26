@@ -13,45 +13,41 @@ neighbourhood = data['neighbourhood'].unique()
 
 # model.feature_names_in_
 
+st.markdown(
+"""
+<style>
+button {
+    height: 30px;
+    border: 1px solid black;
+}
+</style>
+""",
+    unsafe_allow_html=True,
+)
 
 st.title('Predict Airbnb Rent Cost')
 col1, col2 = st.columns([1,1])
 
 with col1:
-    latitude = st.slider(
-        "Latitude",
-        value=50,
-        min_value=30,
-        max_value=150,
-        step=1
-    )
-    
-    longitude = st.slider(
-        "Longitude",
-        value=50,
-        min_value=30,
-        max_value=150,
-        step=1
-    )
     
     min_nights = st.number_input(
-        "Minimum Nights"
+        "Minimum Nights", step=1
     )
     
     num_reviews = st.number_input(
-        "Number of Reviews"
+        "Number of Reviews", step=1
     )
     
     reviews_per_month = st.number_input(
-        "Reviews per Month"
+        "Reviews per Month", step=1
     )
     
     calculated_host_listings_count = st.number_input(
-        "Listing Count"
+        "Listing Count", step=1
     )
     
     availability_365 = st.number_input(
-        "Availability"
+        "Availability", step=1
     )
     
 with col2:
@@ -80,8 +76,6 @@ st.write("\n\n")
 if st.button("Predict Rent"):
 
     client_data = pd.DataFrame({
-        "latitude": [latitude],
-        "longitude": [longitude],
         "minimum_nights": [min_nights],
         "number_of_reviews": [num_reviews],
         "reviews_per_month": [reviews_per_month],
@@ -99,4 +93,3 @@ if st.button("Predict Rent"):
     pred_value = model.predict(client_data)
     pred_value = exp(pred_value)
     st.markdown(f"## Valor do aluguel previsto: US$ {round(float(pred_value), 2)}")
-
