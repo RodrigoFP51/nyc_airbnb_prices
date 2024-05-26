@@ -24,6 +24,13 @@ análise desses dados, esperamos obter insights úteis sobre o mercado
 imobiliário do Airbnb e fornecer recomendações valiosas para
 proprietários e locatários de imóveis.
 
+A partir disso desenvolvi um aplicativo em Streamlit em que o usuário
+pode fornecer dados de um imóvel (vizinhança, número de reviews, a
+quantidade de dias que o imóvel fica disponivel no ano) e partir disso o
+aluguel é calculado.
+
+[Clique aqui](https://nycairbnbapp.streamlit.app/) para acessar o app.
+
 ## Dados
 
 - Dados: [Kaggle](https://www.kaggle.com/c/sliced-s01e05-WXx7h8/data)
@@ -43,18 +50,18 @@ como deve ser enviada o arquivo CSV para submeter à competição.
 | name                           | Nome da listagem                                                    |
 | host_id                        | Identificador único para o anfitrião da listagem                    |
 | host_name                      | Nome do anfitrião                                                   |
-| neighbourhood_group            | Bairro onde a listagem está localizada (por exemplo, “Manhattan”)   |
-| neighbourhood                  | Bairro onde a listagem está localizada (por exemplo, “East Harlem”) |
+| neighbourhood_group            | Bairro onde o imóvel está localizada (por exemplo, “Manhattan”)     |
+| neighbourhood                  | Bairro onde o imóvel está localizada (por exemplo, “East Harlem”)   |
 | latitude                       | Latitude da localização da listagem                                 |
 | longitude                      | Longitude da localização da listagem                                |
 | room_type                      | Tipo de quarto (‘Entire home/apt’, ‘Private room’ ou ‘Shared room’) |
-| price                          | Custo para uma reserva de uma noite da listagem                     |
-| minimum_nights                 | Número mínimo de noites necessárias para reservar a listagem        |
-| number_of_reviews              | Número de avaliações que a listagem possui                          |
-| last_review                    | Data da última avaliação da listagem                                |
-| reviews_per_month              | Número de avaliações que a listagem recebe por mês, em média        |
-| calculated_host_listings_count | Número de listagens que o anfitrião possui                          |
-| availability_365               | Número de dias no ano em que a listagem está disponível             |
+| price                          | Custo para uma reserva de uma noite                                 |
+| minimum_nights                 | Número mínimo de noites necessárias para reservar                   |
+| number_of_reviews              | Número de avaliações que o imóvel possui                            |
+| last_review                    | Data da última avaliação                                            |
+| reviews_per_month              | Número de avaliações que o imóvel recebe por mês, em média          |
+| calculated_host_listings_count | Número de imóveis cadastrados que o anfitrião possui                |
+| availability_365               | Número de dias no ano em que o imóvel está disponível               |
 
 ## Pipeline
 
